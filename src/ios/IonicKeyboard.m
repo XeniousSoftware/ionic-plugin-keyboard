@@ -20,6 +20,19 @@
         return nil;
     });
     
+    Method inputViewMethod = class_getInstanceMethod(wkClass, @selector(inputView));
+    IMP inputViewMethodImpl = method_getImplementation(inputViewMethod);
+    
+    selectImpl = imp_implementationWithBlock(^(id _s){
+        if ([self.webView isKindOfClass:[UIWebView class]]) {
+            UIView *inputView=inputViewMethodImpl(_s,@selector(inputView));
+            if(inputView!=nil && [[inputView description] hasPrefix:[@[@"<", @"UI", @"Web", @"Select",@"Single",@"Picker"] componentsJoinedByString:@""]]){
+                return wkOriginalImp(_s,@selector(inputAccessoryView));
+            }
+        }
+        return nilImp(_s,@selector(inputAccessoryView));
+    });
+    
     //set defaults
     self.hideKeyboardAccessoryBar = YES;
     self.disableScroll = NO;
@@ -85,8 +98,8 @@
     }
 
     if (hideKeyboardAccessoryBar) {
-        method_setImplementation(wkMethod, nilImp);
-        method_setImplementation(uiMethod, nilImp);
+        method_setImplementation(wkMethod, selectImpl);
+        method_setImplementation(uiMethod, selectImpl);
     } else {
         method_setImplementation(wkMethod, wkOriginalImp);
         method_setImplementation(uiMethod, uiOriginalImp);
